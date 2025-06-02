@@ -211,6 +211,22 @@ const JournalPage: React.FC = () => {
     window.open(socialShareUrl, '_blank', 'width=600,height=400');
   };
 
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Error logging out:', error);
+        alert('Error logging out. Please try again.');
+      } else {
+        console.log('Successfully logged out');
+        // The auth state change listener will handle redirecting to Auth component
+      }
+    } catch (error) {
+      console.error('Exception during logout:', error);
+      alert('An error occurred while logging out.');
+    }
+  };
+
   if (!user) return <Auth />;
 
   return (
@@ -229,12 +245,22 @@ const JournalPage: React.FC = () => {
               className="drop-shadow-lg hover:scale-105 transition-transform duration-300"
             />
           </div>
-          <div className="w-1/3 flex justify-end">
+          <div className="w-1/3 flex justify-end gap-3">
             <button
               onClick={() => setShowMyBlogs(!showMyBlogs)}
               className="px-6 py-3 backdrop-blur-lg bg-card-gradient border border-white/30 text-text-primary font-semibold rounded-xl shadow-glass transition-all duration-200 hover:shadow-glow transform hover:scale-105"
             >
               My Blogs ({savedBlogs.length})
+            </button>
+            
+            <button
+              onClick={handleLogout}
+              className="px-6 py-3 backdrop-blur-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 text-red-200 hover:text-red-100 font-semibold rounded-xl shadow-glass transition-all duration-200 hover:shadow-glow transform hover:scale-105 flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              Logout
             </button>
           </div>
         </div>
