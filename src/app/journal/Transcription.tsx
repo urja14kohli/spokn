@@ -6,7 +6,7 @@ interface TranscriptionProps {
   showPreview?: boolean;
 }
 
-const Transcription: React.FC<TranscriptionProps> = ({ transcript, onBlogGenerated, showPreview = true }) => {
+const Transcription: React.FC<TranscriptionProps> = ({ transcript, onBlogGenerated }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);

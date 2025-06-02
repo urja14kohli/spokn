@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import Image from 'next/image';
 import Recorder from './Recorder';
@@ -7,38 +7,31 @@ import Transcription from './Transcription';
 import { supabase } from '../../lib/supabaseClient';
 import Auth from '../../components/Auth';
 
+interface User {
+  id: string;
+  email?: string;
+}
+
+interface SavedBlog {
+  id: string;
+  user_id: string;
+  transcript: string;
+  blog_post: string;
+  created_at: string;
+}
+
 const JournalPage: React.FC = () => {
   const [transcript, setTranscript] = useState<string | null>(null);
   const [blogPost, setBlogPost] = useState<string | null>(null);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [shareUrl, setShareUrl] = useState<string>('');
   const [copied, setCopied] = useState(false);
   const [showMyBlogs, setShowMyBlogs] = useState(false);
-  const [savedBlogs, setSavedBlogs] = useState<any[]>([]);
-  const [currentBlogId, setCurrentBlogId] = useState<string | null>(null);
+  const [savedBlogs, setSavedBlogs] = useState<SavedBlog[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-    return () => {
-      listener?.subscription.unsubscribe();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (user) {
-      ensureTableExists();
-      fetchSavedBlogs();
-    }
-  }, [user]);
-
-  const fetchSavedBlogs = async () => {
+  const fetchSavedBlogs = useCallback(async () => {
     if (!user) return;
     
     try {
@@ -62,13 +55,32 @@ const JournalPage: React.FC = () => {
       console.error('Exception while fetching blogs:', error);
       setSavedBlogs([]);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => {
+      listener?.subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      ensureTableExists();
+      fetchSavedBlogs();
+    }
+  }, [user, fetchSavedBlogs]);
 
   const ensureTableExists = async () => {
     try {
       console.log('🔍 Checking if journals table exists...');
       // Try to query the table to see if it exists
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('journals')
         .select('id')
         .limit(1);
@@ -103,7 +115,6 @@ const JournalPage: React.FC = () => {
   const handleBlogGenerated = async (blogText: string) => {
     setBlogPost(blogText);
     setIsSaved(false);
-    setCurrentBlogId(null);
   };
 
   const saveBlog = async () => {
@@ -126,7 +137,6 @@ const JournalPage: React.FC = () => {
       console.log('Supabase response:', { data, error });
       
       if (data && !error) {
-        setCurrentBlogId(data.id);
         setShareUrl(`${window.location.origin}/blog/${data.id}`);
         setIsSaved(true);
         await fetchSavedBlogs(); // Refresh the blog list
@@ -145,10 +155,9 @@ const JournalPage: React.FC = () => {
     }
   };
 
-  const loadBlog = (blog: any) => {
+  const loadBlog = (blog: SavedBlog) => {
     setBlogPost(blog.blog_post);
     setTranscript(blog.transcript);
-    setCurrentBlogId(blog.id);
     setIsSaved(true);
     setShowMyBlogs(false);
   };
@@ -181,7 +190,6 @@ const JournalPage: React.FC = () => {
     if (!blogPost) return;
     
     const title = blogPost.split('\n')[0].replace(/^#\s*/, '') || 'My Voice Journal Blog';
-    const text = blogPost.split('\n').find(line => !line.startsWith('#') && line.trim())?.substring(0, 200) || 'Check out my voice journal blog post!';
     const url = shareUrl || window.location.href;
     
     let socialShareUrl = '';
@@ -271,7 +279,6 @@ const JournalPage: React.FC = () => {
             <Transcription 
               transcript={transcript} 
               onBlogGenerated={handleBlogGenerated}
-              showPreview={false}
             />
           )}
 

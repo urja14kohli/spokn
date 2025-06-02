@@ -7,13 +7,40 @@ interface RecorderProps {
   onTranscriptionComplete: (transcript: string) => void;
 }
 
+interface SpeechRecognitionEvent extends Event {
+  resultIndex: number;
+  results: SpeechRecognitionResultList;
+}
+
+interface SpeechRecognitionErrorEvent extends Event {
+  error: string;
+}
+
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  maxAlternatives: number;
+  start(): void;
+  stop(): void;
+  onresult: ((event: SpeechRecognitionEvent) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
+  onend: (() => void) | null;
+  onstart: (() => void) | null;
+}
+
+interface WindowWithSpeechRecognition extends Window {
+  SpeechRecognition?: new () => SpeechRecognition;
+  webkitSpeechRecognition?: new () => SpeechRecognition;
+}
+
 const Recorder: React.FC<RecorderProps> = ({ onTranscriptionComplete }) => {
   const [isRecording, setIsRecording] = useState(false);
   const [blobURL, setBlobURL] = useState<string | null>(null);
   const [isBlocked, setIsBlocked] = useState(false);
   const [timer, setTimer] = useState(0);
   const [timerInterval, setTimerInterval] = useState<NodeJS.Timeout | null>(null);
-  const [recognition, setRecognition] = useState<any>(null);
+  const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
   const [transcript, setTranscript] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [finalTranscript, setFinalTranscript] = useState('');
@@ -21,105 +48,109 @@ const Recorder: React.FC<RecorderProps> = ({ onTranscriptionComplete }) => {
   useEffect(() => {
     // Check if browser supports Web Speech API
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
-      const recognitionInstance = new SpeechRecognition();
+      const windowWithSpeech = window as WindowWithSpeechRecognition;
+      const SpeechRecognition = windowWithSpeech.webkitSpeechRecognition || windowWithSpeech.SpeechRecognition;
       
-      recognitionInstance.continuous = true;
-      recognitionInstance.interimResults = true;
-      recognitionInstance.lang = 'en-US';
-      recognitionInstance.maxAlternatives = 1;
-      
-      recognitionInstance.onresult = (event: any) => {
-        let interimTranscript = '';
-        let newFinalTranscript = finalTranscript;
+      if (SpeechRecognition) {
+        const recognitionInstance = new SpeechRecognition();
         
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const transcriptSegment = event.results[i][0].transcript;
-          if (event.results[i].isFinal) {
-            newFinalTranscript += transcriptSegment + ' ';
-            setFinalTranscript(newFinalTranscript);
-          } else {
-            interimTranscript += transcriptSegment;
+        recognitionInstance.continuous = true;
+        recognitionInstance.interimResults = true;
+        recognitionInstance.lang = 'en-US';
+        recognitionInstance.maxAlternatives = 1;
+        
+        recognitionInstance.onresult = (event: SpeechRecognitionEvent) => {
+          let interimTranscript = '';
+          let newFinalTranscript = finalTranscript;
+          
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcriptSegment = event.results[i][0].transcript;
+            if (event.results[i].isFinal) {
+              newFinalTranscript += transcriptSegment + ' ';
+              setFinalTranscript(newFinalTranscript);
+            } else {
+              interimTranscript += transcriptSegment;
+            }
           }
-        }
+          
+          // Update the display transcript
+          setTranscript(newFinalTranscript + interimTranscript);
+        };
         
-        // Update the display transcript
-        setTranscript(newFinalTranscript + interimTranscript);
-      };
-      
-      recognitionInstance.onerror = (event: any) => {
-        console.log('Speech recognition error:', event.error);
-        
-        // Handle different error types
-        if (event.error === 'aborted') {
-          // User intentionally stopped, don't restart
-          console.log('Recognition aborted by user');
-          setIsListening(false);
-          return;
-        }
-        
-        if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-          // Permission denied, don't restart
-          console.log('Permission denied for speech recognition');
-          setIsListening(false);
-          return;
-        }
-        
-        // For recoverable errors, try to restart if still recording
-        if (isRecording && (event.error === 'no-speech' || event.error === 'network' || event.error === 'audio-capture')) {
-          console.log('Attempting to restart recognition after recoverable error:', event.error);
-          setTimeout(() => {
-            if (isRecording) {
-              try {
-                recognitionInstance.start();
-                console.log('Recognition restarted successfully');
-              } catch (e) {
-                console.log('Failed to restart recognition:', e);
+        recognitionInstance.onerror = (event: SpeechRecognitionErrorEvent) => {
+          console.log('Speech recognition error:', event.error);
+          
+          // Handle different error types
+          if (event.error === 'aborted') {
+            // User intentionally stopped, don't restart
+            console.log('Recognition aborted by user');
+            setIsListening(false);
+            return;
+          }
+          
+          if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+            // Permission denied, don't restart
+            console.log('Permission denied for speech recognition');
+            setIsListening(false);
+            return;
+          }
+          
+          // For recoverable errors, try to restart if still recording
+          if (isRecording && (event.error === 'no-speech' || event.error === 'network' || event.error === 'audio-capture')) {
+            console.log('Attempting to restart recognition after recoverable error:', event.error);
+            setTimeout(() => {
+              if (isRecording) {
+                try {
+                  recognitionInstance.start();
+                  console.log('Recognition restarted successfully');
+                } catch (e) {
+                  console.log('Failed to restart recognition:', e);
+                }
               }
-            }
-          }, 1000);
-        }
-      };
-      
-      recognitionInstance.onend = () => {
-        console.log('Recognition ended, isRecording:', isRecording);
+            }, 1000);
+          }
+        };
         
-        // Only restart if we're still recording and it wasn't intentionally stopped
-        if (isRecording) {
-          console.log('Attempting to restart recognition after end event');
-          setTimeout(() => {
-            if (isRecording) {
-              try {
-                recognitionInstance.start();
-                console.log('Recognition restarted after end event');
-              } catch (e) {
-                console.log('Failed to restart after end event:', e);
-                // Try one more time with a longer delay
-                setTimeout(() => {
-                  if (isRecording) {
-                    try {
-                      recognitionInstance.start();
-                      console.log('Recognition restarted on second attempt');
-                    } catch (e2) {
-                      console.log('Final restart attempt failed:', e2);
-                      setIsListening(false);
+        recognitionInstance.onend = () => {
+          console.log('Recognition ended, isRecording:', isRecording);
+          
+          // Only restart if we're still recording and it wasn't intentionally stopped
+          if (isRecording) {
+            console.log('Attempting to restart recognition after end event');
+            setTimeout(() => {
+              if (isRecording) {
+                try {
+                  recognitionInstance.start();
+                  console.log('Recognition restarted after end event');
+                } catch (e) {
+                  console.log('Failed to restart after end event:', e);
+                  // Try one more time with a longer delay
+                  setTimeout(() => {
+                    if (isRecording) {
+                      try {
+                        recognitionInstance.start();
+                        console.log('Recognition restarted on second attempt');
+                      } catch (e2) {
+                        console.log('Final restart attempt failed:', e2);
+                        setIsListening(false);
+                      }
                     }
-                  }
-                }, 2000);
+                  }, 2000);
+                }
               }
-            }
-          }, 100);
-        } else {
-          setIsListening(false);
-        }
-      };
-      
-      recognitionInstance.onstart = () => {
-        console.log('Recognition started successfully');
-        setIsListening(true);
-      };
-      
-      setRecognition(recognitionInstance);
+            }, 100);
+          } else {
+            setIsListening(false);
+          }
+        };
+        
+        recognitionInstance.onstart = () => {
+          console.log('Recognition started successfully');
+          setIsListening(true);
+        };
+        
+        setRecognition(recognitionInstance);
+      }
     }
 
     // Check if microphone access is blocked
@@ -177,7 +208,7 @@ const Recorder: React.FC<RecorderProps> = ({ onTranscriptionComplete }) => {
 
     Mp3Recorder.stop()
       .getMp3()
-      .then(([buffer, blob]: [ArrayBuffer, Blob]) => {
+      .then(([, blob]: [ArrayBuffer, Blob]) => {
         const blobURL = URL.createObjectURL(blob);
         setBlobURL(blobURL);
         setIsRecording(false);
