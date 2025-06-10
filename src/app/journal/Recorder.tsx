@@ -235,7 +235,7 @@ const Recorder: React.FC<RecorderProps> = ({ onTranscriptionComplete }) => {
 
   return (
     <div className="w-full backdrop-blur-lg bg-card-gradient border border-white/30 rounded-2xl shadow-glass p-8 flex flex-col items-center">
-              <h2 className="text-2xl font-bold mb-6 text-text-primary font-space underline">Voice Recorder</h2>
+              <h2 className="text-2xl font-bold mb-6 text-text-primary font-space">Voice Recorder</h2>
       {isBlocked ? (
         <div className="text-center p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
           <p className="text-red-300">Microphone access is blocked. Please allow access to use the recorder.</p>
