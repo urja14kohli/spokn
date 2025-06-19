@@ -239,8 +239,8 @@ const JournalPage: React.FC = () => {
             <Image 
               src="/spokn-logo.png" 
               alt="Spokn - You Talk. We Type" 
-              width={300} 
-              height={100} 
+              width={400} 
+              height={133} 
               priority
               className="drop-shadow-lg hover:scale-105 transition-transform duration-300"
             />

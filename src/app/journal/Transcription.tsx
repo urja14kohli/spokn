@@ -43,7 +43,7 @@ const Transcription: React.FC<TranscriptionProps> = ({ transcript, onBlogGenerat
       console.log('Response data:', data);
       
       if (data.blogPost) {
-        onBlogGenerated(data.blogPost);
+      onBlogGenerated(data.blogPost);
       } else if (data.error) {
         setError(data.error);
       } else {

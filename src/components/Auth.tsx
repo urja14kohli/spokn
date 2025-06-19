@@ -70,7 +70,7 @@ export default function Auth() {
       console.error('Exception during sign up:', err);
       setError('An unexpected error occurred. Please try again.');
     } finally {
-      setLoading(false);
+    setLoading(false);
     }
   };
 
@@ -103,7 +103,7 @@ export default function Auth() {
       console.error('Exception during sign in:', err);
       setError('An unexpected error occurred. Please try again.');
     } finally {
-      setLoading(false);
+    setLoading(false);
     }
   };
 
