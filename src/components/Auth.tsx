@@ -30,164 +30,102 @@ export default function Auth() {
   };
 
   const handleSignUp = async () => {
-    setError(null);
-    setSuccess(null);
-    
-    if (!validateForm()) return;
-    
-    setLoading(true);
-    
     try {
+      setLoading(true);
+      setError(null);
       console.log('Attempting to sign up with email:', email);
-      
-      const { data, error } = await supabase.auth.signUp({ 
-        email: email.trim(), 
+      const { error: signUpError } = await supabase.auth.signUp({ 
+        email, 
         password,
         options: {
-          emailRedirectTo: window.location.origin,
-          captchaToken: undefined, // Bypass CAPTCHA
+          emailRedirectTo: window.location.origin
         }
       });
-      
-      console.log('Sign up response:', { data, error });
-      
-      if (error) {
-        console.error('Sign up error:', error);
-        // Handle specific CAPTCHA error
-        if (error.message.includes('captcha')) {
-          setError('CAPTCHA verification failed. Please try again or contact support.');
-        } else {
-          setError(error.message);
-        }
-      } else if (data.user) {
-        setSuccess('Account created successfully! You can now sign in.');
-        console.log('User created:', data.user);
-        // Clear the form
-        setEmail('');
-        setPassword('');
+      if (signUpError) {
+        console.error('Sign up error:', signUpError);
+        setError(signUpError.message);
+      } else {
+        setError('Check your email for the confirmation link.');
       }
     } catch (err) {
-      console.error('Exception during sign up:', err);
-      setError('An unexpected error occurred. Please try again.');
+      console.error('Sign up exception:', err);
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
     } finally {
-    setLoading(false);
+      setLoading(false);
     }
   };
 
   const handleSignIn = async () => {
-    setError(null);
-    setSuccess(null);
-    
-    if (!validateForm()) return;
-    
-    setLoading(true);
-    
     try {
+      setLoading(true);
+      setError(null);
       console.log('Attempting to sign in with email:', email);
-      
-      const { data, error } = await supabase.auth.signInWithPassword({ 
-        email: email.trim(), 
+      const { error: signInError } = await supabase.auth.signInWithPassword({ 
+        email, 
         password 
       });
-      
-      console.log('Sign in response:', { data, error });
-      
-      if (error) {
-        console.error('Sign in error:', error);
-        setError(error.message);
-      } else if (data.user) {
-        console.log('User signed in:', data.user);
-        // Success will be handled by the auth state change listener
+      console.log('Sign in response:', signInError || 'Success');
+      if (signInError) {
+        console.error('Sign in error:', signInError);
+        setError(signInError.message);
       }
     } catch (err) {
-      console.error('Exception during sign in:', err);
-      setError('An unexpected error occurred. Please try again.');
+      console.error('Sign in exception:', err);
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
     } finally {
-    setLoading(false);
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-radial">
-      <div className="backdrop-blur-lg bg-card-gradient border border-white/30 rounded-2xl shadow-glass p-8 w-full max-w-md flex flex-col items-center">
-        <div className="mb-8">
-          <Image 
-            src="/spokn-logo.png" 
-            alt="Spokn - You Talk. We Type" 
-            width={350} 
-            height={120} 
-            priority
-            className="drop-shadow-lg hover:scale-105 transition-transform duration-300"
-          />
-        </div>
-        
+    <div className="min-h-screen flex items-center justify-center bg-dark bg-gradient-to-br from-primary/30 to-accent/20">
+      <div className="backdrop-blur-lg bg-white/20 border border-white/30 rounded-2xl shadow-2xl p-8 w-full max-w-md flex flex-col items-center">
+        <Image
+          src="/spokn-logo.png"
+          alt="Spokn Logo"
+          width={160}
+          height={53}
+          priority
+          className="mb-6 drop-shadow-lg"
+        />
+        <h2 className="text-3xl font-extrabold mb-6 text-dark drop-shadow-lg font-space">Sign In / Sign Up</h2>
         <input
-          className="border border-white/20 outline-none bg-dark/30 rounded-lg px-4 py-3 mb-4 w-full text-lg text-text-primary placeholder:text-text-muted focus:ring-2 focus:ring-primary focus:border-primary transition-all"
+          className="border-none outline-none bg-white/60 rounded-lg px-4 py-3 mb-4 w-full text-lg placeholder:text-dark/60 focus:ring-2 focus:ring-primary transition"
           type="email"
           placeholder="Email"
           value={email}
-          onChange={e => {
-            setEmail(e.target.value);
-            setError(null);
-            setSuccess(null);
-          }}
-          disabled={loading}
+          onChange={e => setEmail(e.target.value)}
         />
-        
         <input
-          className="border border-white/20 outline-none bg-dark/30 rounded-lg px-4 py-3 mb-6 w-full text-lg text-text-primary placeholder:text-text-muted focus:ring-2 focus:ring-primary focus:border-primary transition-all"
+          className="border-none outline-none bg-white/60 rounded-lg px-4 py-3 mb-6 w-full text-lg placeholder:text-dark/60 focus:ring-2 focus:ring-primary transition"
           type="password"
-          placeholder="Password (min 6 characters)"
+          placeholder="Password"
           value={password}
-          onChange={e => {
-            setPassword(e.target.value);
-            setError(null);
-            setSuccess(null);
-          }}
-          disabled={loading}
+          onChange={e => setPassword(e.target.value)}
         />
-        
         <div className="flex gap-4 w-full">
           <button 
-            className="flex-1 bg-button-gradient text-dark font-bold px-4 py-3 rounded-xl shadow-button hover:shadow-glow transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary/60 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none" 
+            className={`flex-1 ${loading ? 'bg-gray-400' : 'bg-primary'} text-dark font-bold px-4 py-3 rounded-xl shadow hover:bg-accent transition flex items-center justify-center`} 
             onClick={handleSignIn} 
             disabled={loading}
           >
             {loading ? (
-              <span className="flex items-center gap-2 justify-center">
-                <div className="w-4 h-4 border-2 border-dark/30 border-t-dark rounded-full animate-spin"></div>
-                Signing In...
-              </span>
+              <div className="w-5 h-5 border-2 border-dark/30 border-t-dark rounded-full animate-spin"></div>
             ) : (
               'Sign In'
             )}
           </button>
-          
           <button 
-            className="flex-1 bg-gradient-to-r from-secondary to-secondary/80 text-dark font-bold px-4 py-3 rounded-xl shadow-button hover:shadow-glow transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-secondary/60 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none" 
+            className={`flex-1 ${loading ? 'bg-gray-400' : 'bg-accent'} text-dark font-bold px-4 py-3 rounded-xl shadow hover:bg-primary transition`} 
             onClick={handleSignUp} 
             disabled={loading}
           >
-            {loading ? (
-              <span className="flex items-center gap-2 justify-center">
-                <div className="w-4 h-4 border-2 border-dark/30 border-t-dark rounded-full animate-spin"></div>
-                Signing Up...
-              </span>
-            ) : (
-              'Sign Up'
-            )}
+            Sign Up
           </button>
         </div>
-        
         {error && (
-          <div className="mt-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg w-full">
-            <p className="text-red-300 text-sm text-center">{error}</p>
-          </div>
-        )}
-        
-        {success && (
-          <div className="mt-4 p-3 bg-green-500/10 border border-green-500/30 rounded-lg w-full">
-            <p className="text-green-300 text-sm text-center">{success}</p>
+          <div className="mt-4 p-4 bg-red-500/10 border border-red-500/30 rounded-lg w-full">
+            <p className="text-red-400 text-center">{error}</p>
           </div>
         )}
       </div>
