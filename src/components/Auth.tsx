@@ -78,7 +78,7 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-dark bg-gradient-to-br from-primary/30 to-accent/20">
+    <div className="min-h-screen bg-dark bg-gradient-to-br from-primary/30 to-accent/20 flex items-center justify-center">
       <div className="backdrop-blur-lg bg-white/20 border border-white/30 rounded-2xl shadow-2xl p-8 w-full max-w-md flex flex-col items-center">
         <Image
           src="/spokn-logo.png"
