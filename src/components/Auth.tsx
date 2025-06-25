@@ -79,14 +79,14 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen bg-gradient-radial flex items-center justify-center">
-      <div className="backdrop-blur-lg bg-white/20 border border-white/30 rounded-2xl shadow-2xl p-10 w-full max-w-xl flex flex-col items-center">
+      <div className="backdrop-blur-lg bg-white/20 border border-white/30 rounded-2xl shadow-2xl p-12 w-[32rem] aspect-square flex flex-col items-center justify-start">
         <Image
           src="/spokn-logo.png"
           alt="Spokn Logo"
-          width={160}
-          height={53}
+          width={240}
+          height={80}
           priority
-          className="mb-6 drop-shadow-lg"
+          className="mb-8 drop-shadow-lg"
         />
         <h2 className="text-3xl font-extrabold mb-6 text-dark drop-shadow-lg font-space">Sign In / Sign Up</h2>
         <input

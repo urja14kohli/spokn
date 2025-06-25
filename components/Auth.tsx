@@ -25,7 +25,7 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen bg-gradient-radial flex items-center justify-center">
-      <div className="backdrop-blur-lg bg-white/20 border border-white/30 rounded-2xl shadow-2xl p-10 w-full max-w-xl flex flex-col items-center">
+      <div className="backdrop-blur-lg bg-white/20 border border-white/30 rounded-2xl shadow-2xl p-12 w-[32rem] aspect-square flex flex-col items-center justify-start">
         <h2 className="text-3xl font-extrabold mb-6 text-dark drop-shadow-lg font-space">Sign In / Sign Up</h2>
         <input
           className="border-none outline-none bg-white/60 rounded-lg px-4 py-3 mb-4 w-full text-lg placeholder:text-dark/60 focus:ring-2 focus:ring-primary transition"
