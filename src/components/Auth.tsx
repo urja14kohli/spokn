@@ -83,8 +83,8 @@ export default function Auth() {
         <Image
           src="/spokn-logo.png"
           alt="Spokn Logo"
-          width={240}
-          height={80}
+          width={320}
+          height={106}
           priority
           className="mb-8 drop-shadow-lg"
         />
