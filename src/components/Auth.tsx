@@ -31,8 +31,8 @@ export default function Auth() {
 
   const handleSignUp = async () => {
     try {
-      setLoading(true);
-      setError(null);
+    setLoading(true);
+    setError(null);
       console.log('Attempting to sign up with email:', email);
       const { error: signUpError } = await supabase.auth.signUp({ 
         email, 
@@ -51,14 +51,14 @@ export default function Auth() {
       console.error('Sign up exception:', err);
       setError(err instanceof Error ? err.message : 'An unexpected error occurred');
     } finally {
-      setLoading(false);
+    setLoading(false);
     }
   };
 
   const handleSignIn = async () => {
     try {
-      setLoading(true);
-      setError(null);
+    setLoading(true);
+    setError(null);
       console.log('Attempting to sign in with email:', email);
       const { error: signInError } = await supabase.auth.signInWithPassword({ 
         email, 
@@ -73,12 +73,12 @@ export default function Auth() {
       console.error('Sign in exception:', err);
       setError(err instanceof Error ? err.message : 'An unexpected error occurred');
     } finally {
-      setLoading(false);
+    setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-dark bg-gradient-to-br from-primary/30 to-accent/20 flex items-center justify-center">
+    <div className="min-h-screen bg-gradient-radial flex items-center justify-center">
       <div className="backdrop-blur-lg bg-white/20 border border-white/30 rounded-2xl shadow-2xl p-8 w-full max-w-md flex flex-col items-center">
         <Image
           src="/spokn-logo.png"

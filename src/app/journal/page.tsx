@@ -299,7 +299,7 @@ const JournalPage: React.FC = () => {
       <div className="flex-1 flex gap-6 px-6 pb-6">
         {/* Left Panel - Voice Recorder, Transcript & Share */}
         <div className="w-1/3 flex flex-col gap-6">
-          <Recorder onTranscriptionComplete={handleTranscriptionComplete} />
+        <Recorder onTranscriptionComplete={handleTranscriptionComplete} />
           
           {transcript && (
             <Transcription 
